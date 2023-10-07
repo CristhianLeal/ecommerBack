@@ -8,7 +8,7 @@ export const validateToken = (req, res, next) => {
       token: 'No hay token'
     })
   }
-  const signature = process.env.CLAVE
+  const signature = process.env.TOKEN
   try {
     // eslint-disable-next-line no-unused-vars
     const data = jwt.verify(token, signature)
