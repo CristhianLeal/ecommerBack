@@ -3,22 +3,17 @@ import Product from '../model/Product.js'
 import jwt from 'jsonwebtoken'
 
 export const getProducts = async (req, res) => {
-  console.log('getProducts')
   try {
     const products = await Product.find({})
-    const claveToken = process.env.CLAVE
-    const token = jwt.sign({ products }, claveToken, { expiresIn: '1h' })
     if (products.length > 0) {
       return res.status(200).json({
         message: 'Productos retornados con éxito',
-        products,
-        token
+        products
       })
     } else {
       res.status(200).json({
         message: 'No hay productos',
-        data: [],
-        token
+        data: []
       })
     }
   } catch (error) {
@@ -83,7 +78,6 @@ export const deleteProduct = async (req, res) => {
       message: 'El id del producto no es valido'
     })
   }
-
   const product = await Product.findByIdAndDelete(id)
   if (!product) {
     return res.status(404).json({
@@ -109,7 +103,6 @@ export const editProduct = async (req, res) => {
       message: 'Producto: no existente para edición'
     })
   }
-
   const productByName = await Product.findOne({ name })
   if (productByName && productById.name !== name) {
     return res.status(400).json({
@@ -131,6 +124,29 @@ export const editProduct = async (req, res) => {
         imageUrl: error.errors?.imageUrl?.message,
         price: error.errors?.price?.message
       }
+    })
+  }
+}
+
+export const log = (req, res) => {
+  try {
+    const claveToken = process.env.TOKEN
+    const token = jwt.sign({}, claveToken, { expiresIn: '1h' })
+    if (token !== undefined) {
+      console.log(token)
+      return res.status(200).json({
+        message: 'token retornado con éxito',
+        token
+      })
+    } else {
+      res.status(404).json({
+        message: 'No se pudo generar el token'
+      })
+    }
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error al generar el token',
+      error: error.message
     })
   }
 }
