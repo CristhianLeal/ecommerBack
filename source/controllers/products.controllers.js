@@ -152,18 +152,30 @@ export const log = (req, res) => {
 }
 
 export const getByFilter = async (req, res) => {
-  const { name } = req.body 
+  const { name } = req.body
   console.log(name)
-  const existName = await Product.findOne({ name })
-  if (existName) {
-    res.status(200).json({
-      message: `Obtuviste un producto llamado ${existName.name}`,
-      existName
+  const searchQuery = name
+  try {
+    const existingProducts = await Product.find({
+      $or: [
+        { name: { $regex: searchQuery, $options: 'i' } },
+        { description: { $regex: searchQuery, $options: 'i' } }
+      ]
     })
-    console.log(existName)
-  } else {
-    return res.status(201).json({
-      message: 'producto no encontrado'
-    })
+    console.log('prueba', existingProducts)
+    if (existingProducts.length > 0) {
+      res.status(200).json({
+        message: `Obtuviste un producto llamado ${existingProducts[0].name}`,
+        data: existingProducts
+      })
+      console.log(existingProducts)
+    } else {
+      console.log('aqui')
+      return res.status(201).json({
+        message: 'producto no encontrado'
+      })
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error al buscar productos.' })
   }
 }
