@@ -133,7 +133,6 @@ export const log = (req, res) => {
     const claveToken = process.env.TOKEN
     const token = jwt.sign({}, claveToken, { expiresIn: '1h' })
     if (token !== undefined) {
-      console.log(token)
       return res.status(200).json({
         message: 'token retornado con éxito',
         token
@@ -153,7 +152,6 @@ export const log = (req, res) => {
 
 export const getByFilter = async (req, res) => {
   const { name } = req.body
-  console.log(name)
   const searchQuery = name
   try {
     const existingProducts = await Product.find({
@@ -162,15 +160,12 @@ export const getByFilter = async (req, res) => {
         { description: { $regex: searchQuery, $options: 'i' } }
       ]
     })
-    console.log('prueba', existingProducts)
     if (existingProducts.length > 0) {
       res.status(200).json({
         message: `Obtuviste un producto llamado ${existingProducts[0].name}`,
         data: existingProducts
       })
-      console.log(existingProducts)
     } else {
-      console.log('aqui')
       return res.status(201).json({
         message: 'producto no encontrado'
       })
