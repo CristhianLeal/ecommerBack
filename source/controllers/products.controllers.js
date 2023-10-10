@@ -1,117 +1,123 @@
-import { isValidObjectId } from 'mongoose'
-import Product from '../model/Product.js'
 import jwt from 'jsonwebtoken'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find({})
-    if (products.length > 0) {
-      return res.status(200).json({
-        message: 'Productos retornados con éxito',
-        products
-      })
-    } else {
-      res.status(200).json({
-        message: 'No hay productos',
-        data: []
-      })
+    const products = await prisma.product.findMany()
+    if (!products || products.length === 0) {
+      return res.status(200).json({ message: 'No hay productos' })
     }
+    return res.status(200).json({ products })
   } catch (error) {
-    return res.status(500).json({
-      message: 'Error al obtener productos',
-      error: error.message
-    })
+    console.error('Error fetching products:', error)
+    return res.status(500).json({ message: 'Server error' })
   }
 }
 
 export const getProduct = async (req, res) => {
   const { id } = req.params
-  if (!isValidObjectId(id)) {
-    return res.status(400).json({
-      message: 'El id del producto no es válido'
+  try {
+    const product = await prisma.product.findUnique({
+      where: {
+        id: parseInt(id, 10)
+      }
     })
+    if (!product) {
+      return res.status(404).json({ message: 'Producto no encontrado' })
+    }
+    return res.status(200).json({ product })
+  } catch (error) {
+    console.error('Error fetching product by ID:', error)
+    return res.status(500).json({ message: 'Server error' })
   }
-  const product = await Product.findById(id)
-  if (!product) {
-    return res.status(404).json({
-      message: 'producto no encontrado'
-    })
-  }
-  res.status(200).json({
-    message: `Obtuviste un producto llamado ${product.name}`,
-    product
-  })
 }
 
 export const createProduct = async (req, res) => {
   const { name, description, imageUrl, price } = req.body
-  const existName = await Product.findOne({ name })
-  if (existName) {
-    res.status(206).send('Este nombre ya esta en uso')
-  } else {
-    const product = await Product({ name, description, imageUrl, price })
-    try {
-      await product.save()
-      res.status(201).json({
-        message: `Producto ${name} creado`,
-        product: product.name
-      })
-    } catch (error) {
-      res.status(500).json({
-        message: 'No se pudo crear el producto',
-        fields: {
-          name: error.errors?.name?.message,
-          description: error.errors?.description?.message,
-          imageUrl: error.errors?.imageUrl?.message,
-          price: error.errors?.price?.message
-        }
-      })
+  try {
+    const existingProduct = await prisma.product.findUnique({ where: { name } })
+    if (existingProduct) {
+      return res.status(206).send('Este nombre ya está en uso')
     }
+    const priceFloat = parseFloat(price)
+    const createdProduct = await prisma.product.create({
+      data: {
+        name,
+        description,
+        imageUrl,
+        price: priceFloat
+      }
+    })
+    res.status(201).json({
+      message: `Producto ${name} creado`,
+      product: createdProduct
+    })
+  } catch (error) {
+    console.error('Error creating product:', error)
+    res.status(500).json({
+      message: 'No se pudo crear el producto',
+      error: error.message
+    })
   }
 }
 
 export const deleteProduct = async (req, res) => {
   const { id } = req.params
-
-  if (!isValidObjectId(id)) {
-    return res.status(400).json({
-      message: 'El id del producto no es valido'
+  try {
+    const parsedId = parseInt(id, 10)
+    const product = await prisma.product.delete({
+      where: {
+        id: parsedId
+      }
+    })
+    if (!product) {
+      return res.status(404).json({
+        message: 'Producto no encontrado'
+      })
+    }
+    res.status(200).json({
+      message: `El producto con el nombre '${product.name}' fue eliminado`
+    })
+  } catch (error) {
+    console.error('Error deleting product:', error)
+    res.status(500).json({
+      message: 'No se pudo eliminar el producto',
+      error: error.message
     })
   }
-  const product = await Product.findByIdAndDelete(id)
-  if (!product) {
-    return res.status(404).json({
-      message: 'Producto no encontrado'
-    })
-  }
-  res.status(200).json({
-    message: `El producto con el nombre '${product?.name}' fue eliminado`
-  })
 }
 
 export const editProduct = async (req, res) => {
   const { id } = req.params
   const { name, description, imageUrl, price } = req.body
-  if (!isValidObjectId(id)) {
-    return res.status(404).json({
-      message: 'Producto: no es valido para edición'
-    })
-  }
-  const productById = await Product.findById(id)
-  if (!productById) {
-    return res.status(404).json({
-      message: 'Producto: no existente para edición'
-    })
-  }
-  const productByName = await Product.findOne({ name })
-  if (productByName && productById.name !== name) {
-    return res.status(400).json({
-      message: 'El nombre del producto ya existe'
-    })
-  }
-
   try {
-    await Product.findByIdAndUpdate({ _id: id }, { name, description, imageUrl, price })
+    const existingProduct = await prisma.product.findUnique({ where: { id: parseInt(id, 10) } })
+    if (!existingProduct) {
+      return res.status(206).json({
+        message: 'Producto: no existente para edición'
+      })
+    }
+    const productByName = await prisma.product.findFirst({ where: { name } })
+    if (productByName && existingProduct.name !== name) {
+      console.log('pb', productByName)
+      console.log('en', existingProduct.name)
+      console.log('name', name)
+      return res.status(206).json({
+        message: 'El nombre del producto ya existe'
+      })
+    }
+    const priceFloat = parseFloat(price)
+    await prisma.product.update({
+      where: { id: parseInt(id, 10) },
+      data: {
+        name,
+        description,
+        imageUrl,
+        price: priceFloat
+      }
+    })
     res.status(201).json({
       message: `Producto ${name} editado`
     })
@@ -151,26 +157,29 @@ export const log = (req, res) => {
 }
 
 export const getByFilter = async (req, res) => {
-  const { name } = req.body
-  const searchQuery = name
+  const { searchQuery } = req.body
+  const searchQueryLowercased = searchQuery.toLowerCase()
   try {
-    const existingProducts = await Product.find({
-      $or: [
-        { name: { $regex: searchQuery, $options: 'i' } },
-        { description: { $regex: searchQuery, $options: 'i' } }
-      ]
+    const products = await prisma.product.findMany({
+      where: {
+        OR: [
+          { name: { contains: searchQueryLowercased } },
+          { description: { contains: searchQueryLowercased } }
+        ]
+      }
     })
-    if (existingProducts.length > 0) {
+    if (products.length > 0) {
       res.status(200).json({
-        message: `Obtuviste un producto llamado ${existingProducts[0].name}`,
-        data: existingProducts
+        message: `Productos encontrados con el término ${searchQuery}`,
+        data: products
       })
     } else {
-      return res.status(201).json({
-        message: 'producto no encontrado'
+      return res.status(404).json({
+        message: 'No se encontraron productos'
       })
     }
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: 'Error al buscar productos.' })
   }
 }
