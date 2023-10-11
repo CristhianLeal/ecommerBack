@@ -1,12 +1,11 @@
 import { Router } from 'express'
-import { getProducts, getProduct, createProduct, deleteProduct, editProduct, log, getByFilter } from '../controllers/products.controllers.js'
+import { getProducts, getProduct, createProduct, deleteProduct, editProduct, getByFilter } from '../controllers/products.controllers.js'
 import { body } from 'express-validator'
 import { validateToken } from '../middlewares/validatesToken.js'
 import { validateField } from '../middlewares/validatesFields.js'
 const router = Router()
 
 router.get('/', getProducts)
-router.get('/log', log)
 router.get('/:id', getProduct)
 router.post('/filter',
   [

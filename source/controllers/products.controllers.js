@@ -1,4 +1,3 @@
-import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -101,9 +100,6 @@ export const editProduct = async (req, res) => {
     }
     const productByName = await prisma.product.findFirst({ where: { name } })
     if (productByName && existingProduct.name !== name) {
-      console.log('pb', productByName)
-      console.log('en', existingProduct.name)
-      console.log('name', name)
       return res.status(206).json({
         message: 'El nombre del producto ya existe'
       })
@@ -134,28 +130,6 @@ export const editProduct = async (req, res) => {
   }
 }
 
-export const log = (req, res) => {
-  try {
-    const claveToken = process.env.TOKEN
-    const token = jwt.sign({}, claveToken, { expiresIn: '1h' })
-    if (token !== undefined) {
-      return res.status(200).json({
-        message: 'token retornado con éxito',
-        token
-      })
-    } else {
-      res.status(404).json({
-        message: 'No se pudo generar el token'
-      })
-    }
-  } catch (error) {
-    return res.status(500).json({
-      message: 'Error al generar el token',
-      error: error.message
-    })
-  }
-}
-
 export const getByFilter = async (req, res) => {
   const { searchQuery } = req.body
   const searchQueryLowercased = searchQuery.toLowerCase()
@@ -179,7 +153,6 @@ export const getByFilter = async (req, res) => {
       })
     }
   } catch (error) {
-    console.log(error)
     res.status(500).json({ message: 'Error al buscar productos.' })
   }
 }
