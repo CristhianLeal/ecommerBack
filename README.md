@@ -77,6 +77,7 @@ npm install
 - [cors](https://github.com/expressjs/cors#readme) Proporciona un middleware para conectar express.
 - [dotenv](https://github.com/motdotla/dotenv#readme) Carga las variables de entorno desde el archivo .env
 - [express](https://expressjs.com/) framework para Node.js.
+- [nodemon](https://www.npmjs.com/package/nodemon)Nodemon automatically restarts Node.js server on file changes, aiding in efficient development and real-time testing.
 - [express-validator](https://www.npmjs.com/package/express-validator) Express-validator validates and sanitizes user input in Express applications.
 - [prisma](https://www.prisma.io/) Prisma is a modern database ORM for simplified interaction.
 - [JWT](https://jwt.io/) JWT (JSON Web Tokens) is a secure way to transmit information between parties in compact, URL-safe strings. It's used for authentication and authorization.
@@ -112,3 +113,5 @@ https://ecommerce-back-v671.onrender.com
 ```
 100.24.70.232
 ```
+
+
