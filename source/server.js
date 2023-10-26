@@ -26,8 +26,8 @@ export class Server {
   }
 
   listen () {
-    this.app.listen(8003, () => {
-      console.log('Servidor corriendo en el puerto 8003')
+    this.app.listen(process.env.PORT, () => {
+      console.log('Servidor corriendo en el puerto;', process.env.PORT)
     })
   }
 }
